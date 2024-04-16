@@ -13,6 +13,8 @@ MathJax = {
 <script id="MathJax-script" async
   src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
 </script>
+
+
 <!-- 
 References:
 
@@ -95,6 +97,8 @@ In this post, we will implement the transformer encoder and the transformer deco
 
 # Attention Mechanism
 The attention mechanism is a key component of the transformer model. It allows the model to focus on different parts of the input sequence when processing each token. The attention mechanism is defined as follows:
+
+
 $$
 Q \in \mathbb{R}^{n \times d_k}, \>\>\>\>\>\> K \in \mathbb{R}^{m \times d_k}, \>\>\>\>\>\> V \in \mathbb{R}^{m \times d_v} \\
 
@@ -160,12 +164,16 @@ class Self_Attention(nn.Module):
 # Multi-Head Attention
 The multi-head attention mechanism is an extension of the attention mechanism that allows the model to focus on different parts of the input sequence simultaneously. It works by splitting the query, key, and value matrices into multiple heads, computing the attention mechanism for each head, and concatenating the outputs. The multi-head attention mechanism is defined as follows:
 <br />
+
+
 $$
 Q \in \mathbb{R}^{n \times d_k}, \>\>\>\>\>\> K \in \mathbb{R}^{m \times d_k}, \>\>\>\>\>\> V \in \mathbb{R}^{m \times d_v} \\
 Q = XW^Q, \>\>\>\>\>\> K = XW^K, \>\>\>\>\>\> V = XW^V \\
 \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \text{head}_2, ..., \text{head}_h)W^O \\
 \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)
 $$
+
+
 <br />
 Where the Attention function is the same as the one defined above, and $W^O$ is the output weight matrix, $W^O \in \mathbb{R}^{hd_v \times d_{model}}$, where $h$ is the number of heads, $d_v$ is the dimension of the value vectors, and $d_{model}$ is the dimension of the model. The multi-head attention mechanism is used in the transformer model to allow the model to focus on different parts of the input sequence simultaneously.
 
