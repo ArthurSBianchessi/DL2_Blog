@@ -101,10 +101,12 @@ The attention mechanism is a key component of the transformer model. It allows t
 
 $$
 Q \in \mathbb{R}^{n \times d_k}, \>\>\>\>\>\> K \in \mathbb{R}^{m \times d_k}, \>\>\>\>\>\> V \in \mathbb{R}^{m \times d_v} \\
+$$
 
-
+$$
 Q = XW^Q, \>\>\>\>\>\> K = XW^K, \>\>\>\>\>\> V = XW^V 
 $$
+
 $$
 \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}} + \text{M}\right)V
 $$
