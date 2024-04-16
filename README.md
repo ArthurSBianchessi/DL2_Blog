@@ -100,7 +100,7 @@ The attention mechanism is a key component of the transformer model. It allows t
 
 
 $$
-Q \in \mathbb{R}^{n \times d_k}, \>\>\>\>\>\> K \in \mathbb{R}^{m \times d_k}, \>\>\>\>\>\> V \in \mathbb{R}^{m \times d_v} \\
+Q \in \mathbb{R}^{n \times d_k}, \>\>\>\>\>\> K \in \mathbb{R}^{m \times d_k}, \>\>\>\>\>\> V \in \mathbb{R}^{m \times d_v} 
 $$
 
 $$
@@ -170,8 +170,17 @@ The multi-head attention mechanism is an extension of the attention mechanism th
 
 $$
 Q \in \mathbb{R}^{n \times d_k}, \>\>\>\>\>\> K \in \mathbb{R}^{m \times d_k}, \>\>\>\>\>\> V \in \mathbb{R}^{m \times d_v} \\
+$$
+
+$$
 Q = XW^Q, \>\>\>\>\>\> K = XW^K, \>\>\>\>\>\> V = XW^V \\
+$$
+
+$$
 \text{MultiHead}(Q, K, V) = \text{Concat}(\text{head}_1, \text{head}_2, ..., \text{head}_h)W^O \\
+$$
+
+$$
 \text{head}_i = \text{Attention}(QW_i^Q, KW_i^K, VW_i^V)
 $$
 
