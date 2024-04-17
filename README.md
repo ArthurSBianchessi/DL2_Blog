@@ -204,14 +204,14 @@ class Self_Attention(nn.Module):
         v = self.W_v(x)
 
         # Split heads: reshape to execute multiple heads in parallel
-        q = q.view(-1, self.n_heads, self.d_k)
-        k = k.view(-1, self.n_heads, self.d_k)
-        v = v.view(-1, self.n_heads, self.d_k)
+        q = q.view(-1, x.size(1), self.n_heads, self.d_k)
+        k = k.view(-1, x.size(1), self.n_heads, self.d_k)
+        v = v.view(-1, x.size(1), self.n_heads, self.d_k)
 
         # Permute for matrix multiplication
-        q = q.permute(1, 0, 2)
-        k = k.permute(1, 2, 0)
-        v = v.permute(1, 0, 2)
+        q = q.permute(0, 2, 1, 3)
+        k = k.permute(0, 2, 3, 1)
+        v = v.permute(0, 2, 1, 3)
 
         attn_scores = torch.matmul(q, k) / np.sqrt(self.d_k)
         if mask is not None:
@@ -219,7 +219,7 @@ class Self_Attention(nn.Module):
         attn = F.softmax(attn_scores, dim=-1)
 
         out = torch.matmul(attn, v)
-        out = out.permute(1, 0, 2).contiguous().view(-1, self.d_model)
+        out = out.permute(0, 2, 1, 3).contiguous().view(-1, x.size(1), self.d_model)
         return out
 ```
 
@@ -244,13 +244,13 @@ class Self_Attention(nn.Module):
         # Split Q, K, V
         q, k, v = torch.chunk(qkv, 3, dim=-1)
 
-        q = q.view(-1, self.n_heads, self.d_k)
-        k = k.view(-1, self.n_heads, self.d_k)
-        v = v.view(-1, self.n_heads, self.d_k)
+        q = q.view(-1, x.size(1), self.n_heads, self.d_k)
+        k = k.view(-1, x.size(1), self.n_heads, self.d_k)
+        v = v.view(-1, x.size(1), self.n_heads, self.d_k)
 
-        q = q.permute(1, 0, 2)
-        k = k.permute(1, 2, 0)
-        v = v.permute(1, 0, 2)
+        q = q.permute(0, 2, 1, 3)
+        k = k.permute(0, 2, 3, 1)
+        v = v.permute(0, 2, 1, 3)
 
         attn_scores = torch.matmul(q, k) / np.sqrt(self.d_k)
         if mask is not None:
@@ -258,7 +258,8 @@ class Self_Attention(nn.Module):
         attn = F.softmax(attn_scores, dim=-1)
 
         out = torch.matmul(attn, v)
-        out = out.permute(1, 0, 2).contiguous().view(-1, self.d_model)
+        out = out.permute(0, 2, 1, 3).contiguous().view(-1, x.size(1), self.d_model)
+
         return out
 ```
 <br />
@@ -282,12 +283,12 @@ class FFN(nn.Module):
         self.activation = activation
 
         # Define the linear layers
-        self.linear1 = nn.Linear(d_model, d_ff)
-        self.linear2 = nn.Linear(d_ff, d_model)
+        self.linear1 = nn.Linear(d_model, d_model)
+        self.linear2 = nn.Linear(d_model, d_model)
 
     def forward(self, x):
         x = self.linear1(x)
-        x = F.relu()
+        x = F.relu(x)
         x = self.linear2(x)
         return x
 ```
@@ -363,15 +364,15 @@ In contrast with batch normalization, layer normalization is applied to a 'layer
 
 ```python
 class LayerNorm(nn.Module):
-    def __init__(self, eps=1e-6):
+    def __init__(self, d_model, eps=1e-6):
         '''
         Layer Normalization
         eps: Epsilon
         '''
         super(LayerNorm, self).__init__()
         self.eps = eps
-        self.gamma = nn.Parameter(1)
-        self.beta = nn.Parameter(0)
+        self.gamma = nn.Parameter(torch.ones(d_model))
+        self.beta = nn.Parameter(torch.zeros(d_model))
 
 
     def forward(self, x):
@@ -420,9 +421,9 @@ class Transformer(nn.Module):
 
         # Declare internal Layers
         self.self_attn = Self_Attention(d_model, n_heads)
-        self.layer_norm1 = LayerNorm()
+        self.layer_norm1 = LayerNorm(d_model)
         self.ffn = ffn
-        self.layer_norm2 = LayerNorm()
+        self.layer_norm2 = LayerNorm(d_model)
 
     def forward(self, x, mask=None):
         '''
@@ -430,8 +431,10 @@ class Transformer(nn.Module):
         mask: Masking
         '''
         # If decoder-only, edit the mask, so that the self-attention mechanism cannot attend to future tokens
-        if self.transformer_type == 'decoder-only':
-            mask = mask | torch.triu(torch.ones(x.size(-2), x.size(-2)), diagonal=1)
+        if self.transformer_type == 'decoder-only' and mask is not None:
+            mask = mask | torch.triu(torch.ones(x.size(-2), x.size(-2)), diagonal=1).to(torch.bool)
+        elif self.transformer_type == 'decoder-only':
+            mask = torch.triu(torch.ones(x.size(-2), x.size(-2)), diagonal=1).reshape(1, 1, x.size(-2), x.size(-2)).to(x.device)
 
         # Self-Attention
         attn = self.self_attn(x, mask)
